@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
+	"os"
 	"strings"
 )
 
@@ -24,8 +26,52 @@ func ProcessLine(line, old, new string) (found bool, res string, occ int) {
 	return found, res, occ
 }
 
-func main() {
-	found, res, occ := ProcessLine("Go is very good i like programming in go", "Go", "Python")
+func FindReplaceFile(src string, old string, new string) (occ int, lines []int, err error) {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return occ, lines, err
+	}
+	defer srcFile.Close()
+	old = old + " "
+	new = new + " "
+	scanner := bufio.NewScanner(srcFile)
+	lineIdx := 1
+	for scanner.Scan() {
+		found, res, o := ProcessLine(scanner.Text(), old, new)
+		if found {
+			occ += o
+			lines = append(lines, lineIdx)
+		}
+		fmt.Println(res)
+		lineIdx++
+	}
 
-	fmt.Println(found, res, occ)
+	return occ, lines, nil
+}
+
+func main() {
+	//found, res, occ := ProcessLine("Go is very good i like programming in go", "Go", "Python")
+
+	//fmt.Println(found, res, occ)
+
+	old := "Go"
+	new := "python"
+
+	occ, lines, err := FindReplaceFile("wikigo.txt", old, new)
+	if err != nil {
+		fmt.Println("Error wile executing function", err)
+	}
+	fmt.Println("===Summary===")
+	defer fmt.Println("==End==")
+	fmt.Printf("Number of occurences of %v : %v\n", old, occ)
+	fmt.Printf("Number of lines: %d\n", len(lines))
+	fmt.Print("lines: [")
+	lens := len(lines)
+	for i, l := range lines {
+		fmt.Printf("%v", l)
+		if i < lens-1 {
+			fmt.Printf("-")
+		}
+	}
+	fmt.Println("]")
 }
