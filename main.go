@@ -26,15 +26,24 @@ func ProcessLine(line, old, new string) (found bool, res string, occ int) {
 	return found, res, occ
 }
 
-func FindReplaceFile(src string, old string, new string) (occ int, lines []int, err error) {
+func FindReplaceFile(src string, dst string, old string, new string) (occ int, lines []int, err error) {
 	srcFile, err := os.Open(src)
 	if err != nil {
 		return occ, lines, err
 	}
 	defer srcFile.Close()
+	distFile, err := os.Create(dst)
+	if err != nil {
+		return occ, lines, err
+	}
+	defer distFile.Close()
+	scanner := bufio.NewScanner(srcFile)
+	writer := bufio.NewWriter(distFile)
+	defer writer.Flush()
+
 	old = old + " "
 	new = new + " "
-	scanner := bufio.NewScanner(srcFile)
+	scanner = bufio.NewScanner(srcFile)
 	lineIdx := 1
 	for scanner.Scan() {
 		found, res, o := ProcessLine(scanner.Text(), old, new)
@@ -42,7 +51,7 @@ func FindReplaceFile(src string, old string, new string) (occ int, lines []int, 
 			occ += o
 			lines = append(lines, lineIdx)
 		}
-		fmt.Println(res)
+		fmt.Fprintf(writer, res)
 		lineIdx++
 	}
 
@@ -57,7 +66,7 @@ func main() {
 	old := "Go"
 	new := "python"
 
-	occ, lines, err := FindReplaceFile("wikigo.txt", old, new)
+	occ, lines, err := FindReplaceFile("wikigo.txt", "wikipython.txt", old, new)
 	if err != nil {
 		fmt.Println("Error wile executing function", err)
 	}
